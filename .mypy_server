@@ -1,0 +1,16 @@
+{
+  "src_dirs": [
+    {
+      "path": "mypytools/",
+      "strict_optional": true
+    },
+    {
+      "path": "tests/"
+    }
+  ],
+  "mypy_paths": [
+    ".",
+    "mypytools/"
+  ],
+  "port": 8998
+}

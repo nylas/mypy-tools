@@ -7,7 +7,7 @@ from __future__ import absolute_import
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 import re
-from typing import Any, Dict, List, Optional, Set, Tuple, TypeVar    # noqa
+from typing import Any, Dict, List, Optional, Tuple, TypeVar    # noqa
 
 import hashlib
 import io
@@ -29,13 +29,10 @@ from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 from watchdog.utils import BaseThread
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+from mypytools.config import config
 
-STRICT_OPTIONAL_DIRS = [
-  os.path.join(ROOT_DIR, 'nylas', 'sync', ''),
-  os.path.join(ROOT_DIR, 'nylas', 'db', ''),
-  os.path.join(ROOT_DIR, 'nylas', 'redwood', ''),
-]
+
+STRICT_OPTIONAL_DIRS = [os.path.join(config['root_dir'], d['path']) for d in config['src_dirs'] if d.get('strict_optional')]
 
 T = TypeVar('T')
 
@@ -66,6 +63,8 @@ class MypyQueueingHandler(PatternMatchingEventHandler):
 
     def _notify_event_handler(self):
         # type: () -> None
+        if self.event_handler is None:
+            return
         self.event_handler.task_cond.acquire()
         self.event_handler.task_cond.notify_all()
         self.event_handler.task_cond.release()
@@ -169,17 +168,14 @@ class MypyTask(object):
 
     def execute(self):
         # type: () -> Tuple[str, str]
-        mypy_path = os.pathsep.join([
-            ROOT_DIR,
-            os.path.join(ROOT_DIR, 'nylas')
-        ])
+        mypy_path = os.pathsep.join(os.path.join(config['root_dir'], path) for path in config.get('mypy_paths', []))
         strict_optional = '--strict-optional' if self._should_use_strict_optional(self.filename) else ''
         cmd = shlex.split(
             "/usr/local/bin/mypy --py2 --ignore-missing-imports --follow-imports=silent {} {}".format(strict_optional,
                                                                                                       self.filename))
         try:
             before_file_hash = self._get_file_hash()
-            after_file_hash = None
+            after_file_hash = ''
             while before_file_hash != after_file_hash:
                 before_file_hash = after_file_hash
                 self._proc = Popen(cmd, stdout=PIPE, stderr=PIPE, env={'MYPY_PATH': mypy_path})
@@ -277,7 +273,7 @@ class HttpServerThread(BaseThread):
 
     def run(self):
         # type: () -> None
-        server_address = ('127.0.0.1', 8999)
+        server_address = ('127.0.0.1', config['port'])
         httpd = HTTPServer(server_address, MypyHttpRequestHandler)
         httpd.file_cache = self.file_cache  # type: ignore
         httpd.serve_forever()
@@ -427,18 +423,7 @@ class MypyEventHandler(BaseThread):
 
 def run_mypy_server():
     # type: () -> None
-    base_path = os.path.join(ROOT_DIR, 'nylas')
-
-    subdirs = [
-        os.path.join(base_path, 'cli'),
-        os.path.join(base_path, 'common'),
-        os.path.join(base_path, 'sync'),
-        os.path.join(base_path, 'db'),
-        os.path.join(base_path, 'sync_eas'),
-        os.path.join(base_path, 'redwood'),
-        os.path.join(base_path, 'infrastructure', 'scripts'),
-        os.path.join(base_path, 'dashboard', 'api'),
-    ]
+    src_dirs = [os.path.join(config['root_dir'], d['path']) for d in config.get('src_dirs', [])]
 
     sys.stdout.write("Initializing mypy server...")
     sys.stdout.flush()
@@ -449,8 +434,8 @@ def run_mypy_server():
     sys.stderr = io.BytesIO()
 
     g = ModuleGraph()
-    for subdir in subdirs:
-        g.parsePathname(subdir)
+    for d in src_dirs:
+        g.parsePathname(d)
     g.external_dependencies = False
     g.trackUnusedNames = True
 
@@ -471,7 +456,7 @@ def run_mypy_server():
     http_server_thread.start()
 
     observer = Observer()
-    observer.schedule(queueing_handler, path=base_path, recursive=True)
+    observer.schedule(queueing_handler, path=config['root_dir'], recursive=True)
     observer.start()
 
     try:

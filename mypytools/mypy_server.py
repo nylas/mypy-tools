@@ -7,7 +7,7 @@ from __future__ import absolute_import
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 import re
-from typing import Any, Dict, List, Optional, Tuple, TypeVar    # noqa
+from typing import Any, Dict, List, Optional, Tuple, TypeVar, Set  # noqa
 
 import hashlib
 import io
@@ -94,7 +94,6 @@ class MypyQueueingHandler(PatternMatchingEventHandler):
 
     def next_event(self, receiver):
         # type: (MypyEventHandler) -> None
-        event = None    # type: Optional[FileSystemEvent]
         while True:
             # If there aren't any items in the queue, block until there is.
             event = self.events.get(block=True)
@@ -176,6 +175,8 @@ class MypyTask(object):
         try:
             before_file_hash = self._get_file_hash()
             after_file_hash = ''
+            out = ''
+            exit_code = 0
             while before_file_hash != after_file_hash:
                 before_file_hash = after_file_hash
                 self._proc = Popen(cmd, stdout=PIPE, stderr=PIPE, env={'MYPY_PATH': mypy_path})
@@ -307,22 +308,18 @@ class MypyEventHandler(BaseThread):
         else:
             self.task_pool.insert(index, task)
 
-    def on_modified(self, event):
-        # type: (FileSystemEvent) -> None
-        # We want to re-check each module that imports the modified module.
+    def _find_modified_module(self, src_path):
+        # type: (str) -> Optional[Module]
         modified_module = None
         for module_ in self.dep_graph.listModules():
-            if module_.filename == event.src_path:
+            if module_.filename == src_path:
                 modified_module = module_
                 break
+        return modified_module
 
-        print_divider('TYPECHECKING', newline_before=True)
-        if modified_module is None:
-            print('Unable to find module for modified file {}'.format(event.src_path))
-            print_divider('DONE')
-            return
-
-        modified_modules = {modified_module}
+    def _find_dependencies(self, root_module):
+        # type: (Module) -> Set[str]
+        modified_modules = {root_module}
         dependencies_to_check = set()
 
         def check_module(mod):
@@ -358,22 +355,23 @@ class MypyEventHandler(BaseThread):
                 break
 
         dependencies_to_check.update({os.path.abspath(module_.filename) for module_ in modified_modules})
+        return dependencies_to_check
 
-        self.task_cond.acquire()
-
-        # Make sure the worker pool is full.
+    def _ensure_workers(self):
+        # type: () -> None
         while len(self.worker_pool) < multiprocessing.cpu_count():
             worker = MypyWorker(self.task_pool, self.task_cond, self.file_cache)
             self.worker_pool.append(worker)
             worker.start()
 
-        # Add the modified file first so it's the first one to be checked.
-        self._add_task(MypyTask(os.path.abspath(modified_module.filename)), index=0)
+    def _disable_workers(self):
+        # type: () -> None
+        # Prevent workers from consuming any tasks in the queue until we're ready.
+        for worker in self.worker_pool:
+            worker.run_tasks = False
 
-        # Add tasks for dependencies to the task pool.
-        for filename in dependencies_to_check:
-            self._add_task(MypyTask(filename))
-
+    def _enable_workers(self):
+        # type: () -> None
         # Mark all workers to start running tasks and interrupt any
         # workers with tasks that will need to be re-run.
         for worker in self.worker_pool:
@@ -382,10 +380,10 @@ class MypyEventHandler(BaseThread):
                 continue
             if worker.current_task in self.task_pool:
                 worker.current_task.interrupt()
-
         self.task_cond.notify_all()
 
-        # Wait until all tasks have been consumed or until we're notified of new modifications.
+    def _wait_until_tasks_completed(self):
+        # type: () -> None
         start_size = len(self.task_pool)
         while len(self.task_pool) > 0 and not self.queueing_handler.has_new_events:
             curr_size = len(self.task_pool)
@@ -410,8 +408,29 @@ class MypyEventHandler(BaseThread):
                 if not all_clear:
                     self.task_cond.wait()
 
-        for worker in self.worker_pool:
-            worker.run_tasks = False
+    def on_modified(self, event):
+        # type: (FileSystemEvent) -> None
+        print_divider('TYPECHECKING', newline_before=True)
+
+        modified_module = self._find_modified_module(event.src_path)
+        if modified_module is None:
+            print('Unable to find module for modified file {}'.format(event.src_path))
+            print_divider('DONE')
+            return
+
+        dependencies_to_check = self._find_dependencies(modified_module)
+
+        self.task_cond.acquire()
+
+        # Add the modified file first so it's the first one to be checked.
+        self._add_task(MypyTask(os.path.abspath(modified_module.filename)), index=0)
+        for filename in dependencies_to_check:
+            self._add_task(MypyTask(filename))
+
+        self._ensure_workers()
+        self._enable_workers()
+        self._wait_until_tasks_completed()
+        self._disable_workers()
 
         print_divider('DONE')
         self.task_cond.release()
@@ -466,6 +485,7 @@ def run_mypy_server():
         observer.stop()
 
     observer.join()
+
 
 if __name__ == "__main__":
     run_mypy_server()

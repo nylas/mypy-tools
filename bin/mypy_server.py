@@ -440,17 +440,14 @@ class MypyEventHandler(BaseThread):
             self.queueing_handler.next_event(self)
 
 
-def run_mypy_server():
-    # type: () -> None
-    src_dirs = [os.path.join(config['root_dir'], d['path']) for d in config.get('src_dirs', [])]
-
-    sys.stdout.write("Initializing mypy server...")
-    sys.stdout.flush()
-
+def build_dependency_graph(src_dirs, silence):
+    # type: (List[str], bool) -> ModuleGraph
     old_stdout = sys.stdout
     old_stderr = sys.stderr
-    sys.stdout = io.BytesIO()
-    sys.stderr = io.BytesIO()
+
+    if silence:
+        sys.stdout = io.StringIO()
+        sys.stderr = io.StringIO()
 
     try:
         g = ModuleGraph()
@@ -458,18 +455,23 @@ def run_mypy_server():
             g.parsePathname(d)
         g.external_dependencies = False
         g.trackUnusedNames = True
-    except Exception:
+        return g
+    finally:
         sys.stdout = old_stdout
         sys.stderr = old_stderr
 
-        g = ModuleGraph()
-        for d in src_dirs:
-            g.parsePathname(d)
-        g.external_dependencies = False
-        g.trackUnusedNames = True
 
-    sys.stdout = old_stdout
-    sys.stderr = old_stderr
+def run_mypy_server():
+    # type: () -> None
+    src_dirs = [os.path.join(config['root_dir'], d['path']) for d in config.get('src_dirs', [])]
+
+    sys.stdout.write("Initializing mypy server...")
+    sys.stdout.flush()
+
+    try:
+        g = build_dependency_graph(src_dirs, silence=True)
+    except Exception:
+        g = build_dependency_graph(src_dirs, silence=False)
 
     sys.stdout.write("Done!\n")
     sys.stdout.flush()

@@ -8,7 +8,7 @@
       "path": "tests/"
     }
   ],
-  "mypy_paths": [
+  "mypy_path": [
     ".",
     "mypytools/"
   ],

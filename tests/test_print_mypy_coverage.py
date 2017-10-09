@@ -1,8 +1,9 @@
-from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import print_function
 
-from mypytools.print_mypy_coverage import process_source, SourceObj
+from bin.print_mypy_coverage import process_source, SourceObj
+
 
 def process_files(files):
     # type: List[Tuple[str, str]] -> List[str]

@@ -167,7 +167,7 @@ class MypyTask(object):
 
     def execute(self):
         # type: () -> Tuple[str, str]
-        mypy_path = os.pathsep.join(os.path.join(config['root_dir'], path) for path in config.get('mypy_paths', []))
+        mypy_path = os.pathsep.join(os.path.join(config['root_dir'], path) for path in config.get('mypy_path', []))
         strict_optional = '--strict-optional' if self._should_use_strict_optional(self.filename) else ''
         cmd = shlex.split(
             "/usr/local/bin/mypy --py2 --ignore-missing-imports --follow-imports=silent {} {}".format(strict_optional,
@@ -452,11 +452,21 @@ def run_mypy_server():
     sys.stdout = io.BytesIO()
     sys.stderr = io.BytesIO()
 
-    g = ModuleGraph()
-    for d in src_dirs:
-        g.parsePathname(d)
-    g.external_dependencies = False
-    g.trackUnusedNames = True
+    try:
+        g = ModuleGraph()
+        for d in src_dirs:
+            g.parsePathname(d)
+        g.external_dependencies = False
+        g.trackUnusedNames = True
+    except Exception:
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+
+        g = ModuleGraph()
+        for d in src_dirs:
+            g.parsePathname(d)
+        g.external_dependencies = False
+        g.trackUnusedNames = True
 
     sys.stdout = old_stdout
     sys.stderr = old_stderr

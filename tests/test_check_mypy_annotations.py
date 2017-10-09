@@ -1,13 +1,15 @@
 #!/usr/bin/env python
-from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
-from typing import Optional, Dict   # noqa
+from __future__ import print_function
 
 import ast  # noqa
 
+from typing import Optional, Dict  # noqa
+
+from bin.check_mypy_annotations import fill_line_to_func_gaps, process_source, visit_node
 from mypytools import source_utils
-from mypytools.check_mypy_annotations import fill_line_to_func_gaps, process_source, visit_node
+
 
 def get_error_lines(source, added_lines):
     # type: (str, Set[int]) -> List[int]

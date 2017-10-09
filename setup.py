@@ -11,7 +11,7 @@ setup(name='mypytools',
           'typing',
           'watchdog'
       ],
-      packages=['mypytools'],
+      packages=['mypytools', 'mypytools.server'],
       scripts=[
           'bin/check_mypy_annotations.py',
           'bin/mypy_server.py',

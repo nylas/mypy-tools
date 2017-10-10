@@ -79,15 +79,18 @@ def get_modified_files(rev):
             python_paths.append(abs_path)
             continue
 
-        with open(abs_path, 'r') as f:
-            first_line = f.readline()
-            if first_line.startswith('#!/usr/bin/env python'):
-                python_paths.append(abs_path)
-                continue
+        try:
+            with open(abs_path, 'r') as f:
+                first_line = f.readline()
+                if first_line.startswith('#!/usr/bin/env python'):
+                    python_paths.append(abs_path)
+                    continue
 
-            if first_line.startswith('#!/usr/share/python/cloud-core/bin/python'):
-                python_paths.append(abs_path)
-                continue
+                if first_line.startswith('#!/usr/share/python/cloud-core/bin/python'):
+                    python_paths.append(abs_path)
+                    continue
+        except IOError:
+            continue
 
     return python_paths
 

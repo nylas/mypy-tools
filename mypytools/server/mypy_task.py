@@ -39,10 +39,9 @@ class MypyTask(object):
     def execute(self):
         # type: () -> Tuple[str, str]
         mypy_path = os.pathsep.join(os.path.join(config['root_dir'], path) for path in config.get('mypy_path', []))
+        flags = ' '.join(config.get('global_flags', []))
         strict_optional = '--strict-optional' if self._should_use_strict_optional(self.filename) else ''
-        cmd = shlex.split(
-            "/usr/local/bin/mypy --py2 --ignore-missing-imports --follow-imports=silent {} {}".format(strict_optional,
-                                                                                                      self.filename))
+        cmd = shlex.split("/usr/local/bin/mypy {} {} {}".format(flags, strict_optional, self.filename))
         try:
             before_file_hash = self._get_file_hash()
             after_file_hash = ''

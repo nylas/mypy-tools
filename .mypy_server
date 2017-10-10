@@ -12,5 +12,11 @@
     ".",
     "mypytools/"
   ],
-  "port": 8998
+  "port": 8998,
+  "global_flags": [
+    "--py2",
+    "--follow-imports=silent",
+    "--ignore-missing-imports",
+    "--incremental"
+  ]
 }

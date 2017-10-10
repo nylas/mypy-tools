@@ -83,9 +83,19 @@ def test_correct_offset():
 @blueprint.route('/', methods=['POST'])
 def create():
     if not g.features.contacts_crud:
-        return err(400, "Contact creation isn't supported in the version of the Nylas API your app uses. "
-                        "Please update the API version for your app in the Nylas developer dashboard. "
-                        "https://dashboard.nylas.com ")
+        return err(400, "This isn't supported in the version of the API your app uses. "
+                        "Please update the API version for your app in the developer dashboard. "
+                        "https://dashboard.com ")
     """
     error_lines = get_error_lines(source, {6})
     assert error_lines == [4]
+
+
+def test_python3():
+    # type: () -> None
+    source = """
+def foo(a: int, b) -> int:
+    return a + b
+    """
+    error_lines = get_error_lines(source, {3})
+    assert error_lines == []

@@ -3,9 +3,12 @@
     {
       "path": "mypytools/",
       "strict_optional": true
-    },
-    {
-      "path": "tests/"
+    }, {
+      "path": "tests/",
+      "strict_optional": true
+    }, {
+      "path": "bin/",
+      "strict_optional": true
     }
   ],
   "mypy_path": [

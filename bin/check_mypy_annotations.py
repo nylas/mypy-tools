@@ -2,7 +2,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
-from typing import Dict, List, Optional, Set, Tuple    # noqa
+from typing import Dict, List, Optional, Set    # noqa
 
 import ast
 import click
@@ -50,7 +50,7 @@ def fill_line_to_func_gaps(line_to_func_map, num_lines):
 
 def get_added_lines(filename, rev):
     # type: (str, str) -> Set[int]
-    added_lines = subprocess.check_output("git diff --unified=0 {} {} | grep @@ | cut -d'+' -f2 | cut -f1 -d' '".format(rev, filename), shell=True).split('\n')
+    added_lines = subprocess.check_output("git diff --unified=0 {} {} | grep @@ | cut -d'+' -f2 | cut -f1 -d' '".format(rev, filename), universal_newlines=True, shell=True).split('\n')
     results = set()
     for line in added_lines:
         result = UNIFIED_DIFF_REGEX.match(line)
@@ -69,8 +69,8 @@ def get_added_lines(filename, rev):
 
 def get_modified_files(rev):
     # type: (str) -> List[str]
-    relative_paths = subprocess.check_output("git diff --name-only {}".format(rev), shell=True).split('\n')[0:-1]
-    repo_root = subprocess.check_output("git rev-parse --show-toplevel", shell=True).split('\n')[0]
+    relative_paths = subprocess.check_output("git diff --name-only {}".format(rev), shell=True, universal_newlines=True).split('\n')[0:-1]
+    repo_root = subprocess.check_output("git rev-parse --show-toplevel", shell=True, universal_newlines=True).split('\n')[0]
 
     python_paths = []
     for path in relative_paths:
@@ -99,6 +99,9 @@ def process_source(lines, added_lines, line_to_func_map):
     for line_num in sorted(added_lines):
         func_def = line_to_func_map[line_num]
         if func_def is None or func_def in printed_funcs:
+            continue
+
+        if source_utils.is_func_def_annotated(func_def, lines):
             continue
 
         first_line_num = source_utils.find_first_line_of_func(lines, func_def.lineno)

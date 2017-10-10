@@ -2,7 +2,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
-from typing import Dict, Optional   # noqa
+from typing import Dict, Optional, List  # noqa
 
 from mypytools import source_utils
 
@@ -57,14 +57,14 @@ class SourceObj(object):
             self.num_scanned_funcs,
             percent,
             spaces=spaces))
-        sorted_children = sorted(list(self.children.iteritems()), key=lambda c: c[1].coverage(), reverse=True)
+        sorted_children = sorted(list(self.children.items()), key=lambda c: c[1].coverage(), reverse=True)
         max_depth = None if max_depth is None else max_depth - 1
         for child_name, child in sorted_children:
             child.sorted_output(indent + 1, output_lines, max_depth)
 
     def sorted_print(self, indent, max_depth=None):
         # type: (int, Optional[int]) -> None
-        output_lines = []
+        output_lines = []   # type: List[str]
         self.sorted_output(indent, output_lines, max_depth)
         print('\n'.join(output_lines))
 

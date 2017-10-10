@@ -5,6 +5,8 @@ from __future__ import division
 import ast
 import re
 
+from typing import List, Tuple
+
 DECORATOR_PATTERN = re.compile(r'^\s*@')
 TYPE_PATTERN = re.compile(r'^\s+#\s+type:\s+')
 
@@ -58,6 +60,13 @@ def is_line_annotated(line):
 
 def is_func_def_annotated(func, lines):
     # type: (ast.FunctionDef, List[str]) -> bool
+    if getattr(func, 'returns'):
+        return True
+
+    for arg in func.args.args:
+        if getattr(arg, 'annotation'):
+            return True
+
     first_line_num = find_first_line_of_func(lines, func.lineno)
     first_line = lines[first_line_num]
     return is_line_annotated(first_line)

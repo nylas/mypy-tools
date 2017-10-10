@@ -1,5 +1,5 @@
 # mypy-tools
-A handful of tools for using mypy.
+A handful of tools to make using mypy a little easier.
 
 ## Installing
 Just run `pip install mypytools`

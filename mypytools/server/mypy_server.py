@@ -59,7 +59,7 @@ def run_server():
 
     file_cache = MypyFileCache()
 
-    queueing_handler = MypyQueueingHandler()
+    queueing_handler = MypyQueueingHandler(src_dirs)
     mypy_handler = MypyEventHandler(g, queueing_handler, file_cache)
     queueing_handler.event_handler = mypy_handler
     mypy_handler.start()

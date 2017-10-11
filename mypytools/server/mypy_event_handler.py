@@ -165,18 +165,18 @@ class MypyEventHandler(BaseThread):
         # type: (FileSystemEvent) -> None
         print_divider('TYPECHECKING', newline_before=True)
 
+        self.task_cond.acquire()
+
         modified_module = self._find_modified_module(event.src_path)
         if modified_module is None:
             print('Unable to find module for modified file {}'.format(event.src_path))
-            print_divider('DONE')
-            return
+            dependencies_to_check = {event.src_path}
+        else:
+            dependencies_to_check = self._find_dependencies(modified_module)
 
-        dependencies_to_check = self._find_dependencies(modified_module)
+            # Add the modified file first so it's the first one to be checked.
+            self._add_task(MypyTask(os.path.abspath(modified_module.filename)), index=0)
 
-        self.task_cond.acquire()
-
-        # Add the modified file first so it's the first one to be checked.
-        self._add_task(MypyTask(os.path.abspath(modified_module.filename)), index=0)
         for filename in dependencies_to_check:
             self._add_task(MypyTask(filename))
 

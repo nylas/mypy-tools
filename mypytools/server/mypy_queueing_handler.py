@@ -3,7 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from Queue import Queue
-from typing import Optional
+from typing import Optional, List
 
 from watchdog.events import PatternMatchingEventHandler, FileSystemEvent, FileModifiedEvent
 
@@ -11,14 +11,38 @@ from mypytools.server.mypy_event_handler import MypyEventHandler
 
 
 class MypyQueueingHandler(PatternMatchingEventHandler):
-    patterns = ['*.py']
+    patterns = ['*']
+    ignore_patterns = ['*.swp', '*/.venv/*', '*/venv/*', '*/.mypy_cache/*']
+    ignore_directories = True
 
-    def __init__(self):
-        # type: () -> None
+    def __init__(self, src_dirs):
+        # type: (List[str]) -> None
         self.events = Queue()       # type: Queue[FileSystemEvent]
         self.last_deleted = None    # type: Optional[str]
         self.event_handler = None   # type: Optional[MypyEventHandler]
+        self.src_dirs = src_dirs
         super(MypyQueueingHandler, self).__init__()
+
+    def _should_check_file(self, path):
+        in_src_dir = False
+        for src_dir in self.src_dirs:
+            if path.startswith(src_dir):
+                in_src_dir = True
+                break
+
+        if not in_src_dir:
+            return False
+
+        if path.endswith('.py'):
+            return True
+        try:
+            with open(path, 'r') as f:
+                first_line = f.readline().rstrip('\n')
+                if first_line.startswith('#!') and first_line.endswith('python'):
+                    return True
+        except IOError:
+            pass
+        return False
 
     def _notify_event_handler(self):
         # type: () -> None
@@ -30,12 +54,16 @@ class MypyQueueingHandler(PatternMatchingEventHandler):
 
     def on_deleted(self, event):
         # type: (FileSystemEvent) -> None
+        if not self._should_check_file(event.src_path):
+            return
         self.last_deleted = event.src_path
         self.events.put(event)
         self._notify_event_handler()
 
     def on_created(self, event):
         # type: (FileSystemEvent) -> None
+        if not self._should_check_file(event.src_path):
+            return
         self.events.put(event)
         self._notify_event_handler()
         if event.src_path == self.last_deleted:
@@ -43,6 +71,8 @@ class MypyQueueingHandler(PatternMatchingEventHandler):
 
     def on_modified(self, event):
         # type: (FileSystemEvent) -> None
+        if not self._should_check_file(event.src_path):
+            return
         self.events.put(event)
         self._notify_event_handler()
 

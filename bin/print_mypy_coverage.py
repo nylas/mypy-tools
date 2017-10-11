@@ -142,7 +142,6 @@ def main(max_depth):
                 paths.add(path)
 
     for path in paths:
-        print(path)
         process_file(root, path)
 
     root.sorted_print(indent=0, max_depth=max_depth)

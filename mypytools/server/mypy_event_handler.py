@@ -189,6 +189,7 @@ class MypyEventHandler(BaseThread):
         self.task_cond.release()
 
     def run(self):
+        # type: () -> None
         while True:
             self.queueing_handler.next_event(self)
 

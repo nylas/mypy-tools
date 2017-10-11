@@ -24,6 +24,7 @@ class MypyQueueingHandler(PatternMatchingEventHandler):
         super(MypyQueueingHandler, self).__init__()
 
     def _should_check_file(self, path):
+        # type: (str) -> bool
         in_src_dir = False
         for src_dir in self.src_dirs:
             if path.startswith(src_dir):

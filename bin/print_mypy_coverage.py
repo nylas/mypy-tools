@@ -5,9 +5,11 @@ from __future__ import division
 from typing import Dict, Optional, List  # noqa
 
 from mypytools import source_utils
+from mypytools.config import config
 
 import ast
-import fileinput
+import click
+import os
 
 
 class SourceObj(object):
@@ -108,14 +110,40 @@ def process_file(root, filename):
     process_source(root, filename, source)
 
 
-def main():
-    # type: () -> None
-    max_depth = None
+def is_python_file(path):
+    # type: (str) -> bool
+    if path.endswith('.py'):
+        return True
+    try:
+        with open(path, 'r') as f:
+            first_line = f.readline().rstrip('\n')
+            if first_line.startswith('#!') and first_line.endswith('python'):
+                return True
+    except IOError:
+        pass
+    return False
+
+
+@click.command()
+@click.option('--max-depth', default=None, type=int)
+def main(max_depth):
+    # type: (Optional[int]) -> None
     root = SourceObj('root')
 
-    for line in fileinput.input():
-        filename = line.rstrip('\n')
-        process_file(root, filename)
+    src_dirs = [os.path.join(config['root_dir'], d['path']) for d in config['src_dirs']]
+
+    paths = set()   # type: Set[str]
+    for src_dir in src_dirs:
+        for dirpath, dirnames, filenames in os.walk(src_dir):
+            for filename in filenames:
+                path = os.path.join(dirpath, filename)
+                if not is_python_file(path):
+                    continue
+                paths.add(path)
+
+    for path in paths:
+        print(path)
+        process_file(root, path)
 
     root.sorted_print(indent=0, max_depth=max_depth)
 

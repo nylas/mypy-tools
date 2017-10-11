@@ -60,11 +60,11 @@ def is_line_annotated(line):
 
 def is_func_def_annotated(func, lines):
     # type: (ast.FunctionDef, List[str]) -> bool
-    if getattr(func, 'returns'):
+    if getattr(func, 'returns', None):
         return True
 
     for arg in func.args.args:
-        if getattr(arg, 'annotation'):
+        if getattr(arg, 'annotation', None):
             return True
 
     first_line_num = find_first_line_of_func(lines, func.lineno)

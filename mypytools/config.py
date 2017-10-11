@@ -27,5 +27,8 @@ def load_config_file():
                 raise RuntimeError('Unable to find .mypy_server config file')
             cwd = new_cwd
             continue
+        except ValueError:
+            print('Error while loading the config file. Maybe a JSON syntax error?')
+            raise
 
 load_config_file()

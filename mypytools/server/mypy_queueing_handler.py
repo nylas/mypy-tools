@@ -21,10 +21,12 @@ class MypyQueueingHandler(PatternMatchingEventHandler):
         self.last_deleted = None    # type: Optional[str]
         self.event_handler = None   # type: Optional[MypyEventHandler]
         self.src_dirs = src_dirs
+        print('MypyQueueingHandler')
         super(MypyQueueingHandler, self).__init__()
 
     def _should_check_file(self, path):
         # type: (str) -> bool
+        print('_should_check_file')
         in_src_dir = False
         for src_dir in self.src_dirs:
             if path.startswith(src_dir):
@@ -55,6 +57,7 @@ class MypyQueueingHandler(PatternMatchingEventHandler):
 
     def on_deleted(self, event):
         # type: (FileSystemEvent) -> None
+        print('_on_deleted')
         if not self._should_check_file(event.src_path):
             return
         self.last_deleted = event.src_path
@@ -63,6 +66,7 @@ class MypyQueueingHandler(PatternMatchingEventHandler):
 
     def on_created(self, event):
         # type: (FileSystemEvent) -> None
+        print('_on_created')
         if not self._should_check_file(event.src_path):
             return
         self.events.put(event)
@@ -72,6 +76,7 @@ class MypyQueueingHandler(PatternMatchingEventHandler):
 
     def on_modified(self, event):
         # type: (FileSystemEvent) -> None
+        print('_on_modified')
         if not self._should_check_file(event.src_path):
             return
         self.events.put(event)

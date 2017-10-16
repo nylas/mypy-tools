@@ -167,6 +167,7 @@ class MypyEventHandler(BaseThread):
 
         self.task_cond.acquire()
 
+        print('A')
         modified_module = self._find_modified_module(event.src_path)
         if modified_module is None:
             print('Unable to find module for modified file {}'.format(event.src_path))
@@ -177,6 +178,7 @@ class MypyEventHandler(BaseThread):
             # Add the modified file first so it's the first one to be checked.
             self._add_task(MypyTask(os.path.abspath(modified_module.filename)), index=0)
 
+        print('B')
         for filename in dependencies_to_check:
             self._add_task(MypyTask(filename))
 
@@ -184,6 +186,7 @@ class MypyEventHandler(BaseThread):
         self._enable_workers()
         self._wait_until_tasks_completed()
         self._disable_workers()
+        print('C')
 
         print_divider('DONE')
         self.task_cond.release()

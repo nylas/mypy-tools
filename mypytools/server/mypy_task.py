@@ -18,6 +18,25 @@ from mypytools.config import config
 STRICT_OPTIONAL_DIRS = [os.path.join(config['root_dir'], d['path']) for d in config['src_dirs'] if d.get('strict_optional')]
 
 
+# From https://stackoverflow.com/a/377028
+def which(program):
+    # type: (str) -> Optional[str]
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+    return None
+
+
 class MypyTask(object):
     def __init__(self, filename):
         # type: (str) -> None
@@ -41,7 +60,12 @@ class MypyTask(object):
         mypy_path = os.pathsep.join(os.path.join(config['root_dir'], path) for path in config.get('mypy_path', []))
         flags = ' '.join(config.get('global_flags', []))
         strict_optional = '--strict-optional' if self._should_use_strict_optional(self.filename) else ''
-        cmd = shlex.split("/usr/local/bin/mypy {} {} {}".format(flags, strict_optional, self.filename))
+        mypy_exec = which('mypy')
+        if mypy_exec is None:
+            print("Couldn't find mypy executable. Is it installed and in your PATH?")
+            raise RuntimeError('Mypy executable missing.')
+
+        cmd = shlex.split("{} {} {} {}".format(mypy_exec, flags, strict_optional, self.filename))
         try:
             before_file_hash = self._get_file_hash()
             after_file_hash = ''

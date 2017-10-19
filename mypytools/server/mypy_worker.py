@@ -13,13 +13,14 @@ from mypytools.server.mypy_task import MypyTask
 
 
 class MypyWorker(BaseThread):
-    def __init__(self, task_pool, task_cond, file_cache):
-        # type: (List[MypyTask], Condition, MypyFileCache) -> None
+    def __init__(self, task_pool, task_cond, file_cache, compact):
+        # type: (List[MypyTask], Condition, MypyFileCache, bool) -> None
         self._task_pool = task_pool
         self._task_cond = task_cond
         self.run_tasks = False
         self.current_task = None    # type: Optional[MypyTask]
         self.file_cache = file_cache
+        self.compact = compact
         super(MypyWorker, self).__init__()
 
     def run(self):
@@ -35,13 +36,16 @@ class MypyWorker(BaseThread):
         self.current_task = self._task_pool.pop(0)
         self._task_cond.release()
 
-        output, file_hash = self.current_task.execute()
+        output, full_context, file_hash = self.current_task.execute()
 
         self._task_cond.acquire()
         self.file_cache.store(self.current_task.filename, file_hash, output)
         self.current_task = None
         if len(output) > 0:
-            sys.stdout.write(output)
+            if self.compact:
+                sys.stdout.write(output)
+            else:
+                sys.stdout.write(full_context)
             sys.stdout.flush()
         self._task_cond.notify_all()
         self._task_cond.release()

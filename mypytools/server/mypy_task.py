@@ -112,7 +112,8 @@ class MypyTask(object):
         # type: (str, List[Tuple[int, str]]) -> List[str]
         result = []
         template = """
-    \033[91m\033[1m{}\033[0m
+  \033[91m\033[1mError\033[0m: {}
+    \033[93m\033[1m{}\033[0m
 
         {}
         {}
@@ -127,7 +128,8 @@ class MypyTask(object):
                 begin_line = max(0, line - 2)
                 end_line = min(len(lines), line + 3)
                 error_lines = ['{} {}'.format(begin_line + num, l.rstrip('\n')) for num, l in enumerate(lines[begin_line:end_line])]
-                error_lines.insert(0, message)
+                error_lines.insert(0, '{}:{}'.format(path, line))
+                error_lines.insert(1, message)
                 result.append(template.format(*error_lines))
         return result
 

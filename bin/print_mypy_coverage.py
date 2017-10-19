@@ -2,7 +2,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
-from typing import Dict, Optional, List  # noqa
+from typing import Dict, Optional, List, Set  # noqa
 
 from mypytools import source_utils
 from mypytools.config import config

@@ -58,7 +58,7 @@ class MypyTask(object):
             return hashlib.md5(f.read()).hexdigest()
 
     def execute(self):
-        # type: () -> Tuple[str, List[str], str]
+        # type: () -> Tuple[str, str, str]
         mypy_path = os.pathsep.join(os.path.join(config['root_dir'], path) for path in config.get('mypy_path', []))
         flags = ' '.join(config.get('global_flags', []))
         strict_optional = '--strict-optional' if self._should_use_strict_optional(self.filename) else ''

@@ -55,11 +55,15 @@ def find_first_line_of_func(lines, line_num):
 def is_line_annotated(line):
     # type: (str) -> bool
     result = TYPE_PATTERN.search(line)
+
     return result is not None
 
 
 def is_func_def_annotated(func, lines):
     # type: (ast.FunctionDef, List[str]) -> bool
+    """ Produce True if either Python3 or Python2 style type annotations found
+    for the given function
+    """
     if getattr(func, 'returns', None):
         return True
 
@@ -69,7 +73,21 @@ def is_func_def_annotated(func, lines):
 
     first_line_num = find_first_line_of_func(lines, func.lineno)
     first_line = lines[first_line_num]
-    return is_line_annotated(first_line)
+    if is_line_annotated(first_line):
+        return True
+
+    first_line_num = find_first_line_of_func(lines, func.lineno)
+    first_line = lines[first_line_num]
+
+    if is_line_annotated(first_line):
+        return True
+
+    end_line_of_def = lines[first_line_num - 1]
+    function_definition, rest = end_line_of_def.split(':', 1)
+    if is_line_annotated(rest):
+        return True
+
+    return False
 
 
 def parse_source(source):

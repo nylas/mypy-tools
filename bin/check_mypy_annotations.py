@@ -104,15 +104,6 @@ def process_source(lines, added_lines, line_to_func_map):
             continue
 
         first_line_num = source_utils.find_first_line_of_func(lines, func_def.lineno)
-        first_line = lines[first_line_num]
-
-        if source_utils.is_line_annotated(first_line):
-            continue
-
-        end_line_of_def = lines[first_line_num - 1]
-        function_definition, rest = end_line_of_def.split(':', 1)
-        if source_utils.is_line_annotated(rest):
-            continue
 
         results.append(first_line_num)
         printed_funcs.add(func_def)

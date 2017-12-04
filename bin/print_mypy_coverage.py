@@ -115,9 +115,9 @@ def is_python_file(path):
     if path.endswith('.py'):
         return True
     try:
-        with open(path, 'r') as f:
-            first_line = f.readline().rstrip('\n')
-            if first_line.startswith('#!') and first_line.endswith('python'):
+        with open(path, 'rb') as f:
+            first_line = f.readline().rstrip(b'\n')
+            if first_line.startswith(b'#!') and first_line.endswith(b'python'):
                 return True
     except IOError:
         pass

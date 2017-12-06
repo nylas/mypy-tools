@@ -76,12 +76,6 @@ def is_func_def_annotated(func, lines):
     if is_line_annotated(first_line):
         return True
 
-    first_line_num = find_first_line_of_func(lines, func.lineno)
-    first_line = lines[first_line_num]
-
-    if is_line_annotated(first_line):
-        return True
-
     end_line_of_def = lines[first_line_num - 1]
     function_definition, rest = end_line_of_def.split(':', 1)
     if is_line_annotated(rest):

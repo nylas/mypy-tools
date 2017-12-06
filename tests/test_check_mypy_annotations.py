@@ -99,3 +99,13 @@ def foo(a: int, b) -> int:
     """
     error_lines = get_error_lines(source, {3})
     assert error_lines == []
+
+
+def test_short_form_close_parenthesis_line():
+    # type: () -> None
+    source = """
+def foo(a, b):  # type: (int, int) -> int
+    return a + b
+    """
+    error_lines = get_error_lines(source, {3})
+    assert error_lines == []

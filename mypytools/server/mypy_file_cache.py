@@ -22,5 +22,5 @@ class MypyFileCache(object):
 
     def store(self, filename, file_hash, output):
         # type: (str, str, str) -> None
-        self._cache[hashlib.md5(filename).hexdigest()] = (file_hash, output)
+        self._cache[hashlib.md5(filename.encode('utf-8')).hexdigest()] = (file_hash, output)
 

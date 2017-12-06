@@ -5,7 +5,7 @@ from __future__ import print_function
 
 import ast  # noqa
 
-from typing import Optional, Dict  # noqa
+from typing import Optional, Dict, Set, List  # noqa
 
 from bin.check_mypy_annotations import fill_line_to_func_gaps, process_source, visit_node
 from mypytools import source_utils

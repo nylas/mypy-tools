@@ -3,7 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import json
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+import sys
 import re
 from typing import Any
 
@@ -11,6 +11,11 @@ from watchdog.utils import BaseThread
 
 from mypytools.config import config
 from mypytools.server.mypy_file_cache import MypyFileCache
+
+if sys.version_info[0] > 2:
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+else:
+    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 
 class MypyHttpRequestHandler(BaseHTTPRequestHandler):
@@ -39,7 +44,10 @@ class MypyHttpRequestHandler(BaseHTTPRequestHandler):
             return
 
         self._set_headers(response_code=200)
-        self.wfile.write(json.dumps({'output': output}))
+        output = json.dumps({'output': output})
+        if sys.version_info[0] > 2:
+            output = bytes(output, encoding='utf-8')
+        self.wfile.write(output)
 
     def log_message(self, format, *args):
         # type: (str, *Any) -> None

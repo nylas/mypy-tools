@@ -1,4 +1,4 @@
-# mypy-tools
+# mypy-tools [![Build Status](https://travis-ci.org/nylas/mypy-tools.svg?branch=master)](https://travis-ci.org/nylas/mypy-tools)
 A handful of tools to make using mypy a little easier.
 
 ## Installing

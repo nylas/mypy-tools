@@ -14,4 +14,4 @@ Just run `pip install mypytools`
 `print_mypy_coverage.py` is a script to print how many functions have MyPy type annotations. It consumes a list of Python files which it scans for annotations and then prints a directory hierarchy along with the associated annotation coverage.
 
 ## Custom arcanist linter
-`MypyLinter.php` is a custom linter for the arcanist CLI for phabricator. It interacts directly with `mypy_server.py` and `check_mypy_annotations.py` to `arc lint` MyPy superpowers.
+`MypyLinter.php` is a custom linter for the arcanist CLI for phabricator. It interacts directly with `mypy_server.py` and `check_mypy_annotations.py` to give `arc lint` MyPy superpowers.

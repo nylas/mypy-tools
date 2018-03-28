@@ -4,7 +4,6 @@ from __future__ import absolute_import
 
 from threading import Condition
 import os
-import multiprocessing
 import sys
 
 from findimports import ModuleGraph, Module
@@ -34,8 +33,8 @@ def print_divider(text=None, newline_before=False):
 
 
 class MypyEventHandler(BaseThread):
-    def __init__(self, dep_graph, queueing_handler, file_cache, compact):
-        # type: (ModuleGraph, MypyQueueingHandler, MypyFileCache, bool) -> None
+    def __init__(self, dep_graph, queueing_handler, file_cache, compact, num_workers):
+        # type: (ModuleGraph, MypyQueueingHandler, MypyFileCache, bool, int) -> None
         self.dep_graph = dep_graph
         self.worker_pool = []   # type: List[MypyWorker]
         self.task_pool = []     # type: List[MypyTask]
@@ -43,6 +42,7 @@ class MypyEventHandler(BaseThread):
         self.queueing_handler = queueing_handler
         self.file_cache = file_cache
         self.compact = compact
+        self.num_workers = num_workers
         super(MypyEventHandler, self).__init__()
 
     def on_deleted(self, event):
@@ -113,7 +113,7 @@ class MypyEventHandler(BaseThread):
 
     def _ensure_workers(self):
         # type: () -> None
-        while len(self.worker_pool) < multiprocessing.cpu_count():
+        while len(self.worker_pool) < self.num_workers:
             worker = MypyWorker(self.task_pool, self.task_cond, self.file_cache, self.compact)
             self.worker_pool.append(worker)
             worker.start()

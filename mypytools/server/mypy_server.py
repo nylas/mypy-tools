@@ -42,11 +42,11 @@ def build_dependency_graph(src_dirs, silence):
         sys.stderr = old_stderr
 
 
-def run_server(compact):
-    # type: (bool) -> None
+def run_server(compact, num_workers):
+    # type: (bool, int) -> None
     src_dirs = [os.path.join(config['root_dir'], d['path']) for d in config.get('src_dirs', [])]
 
-    sys.stdout.write("Initializing mypy server...")
+    sys.stdout.write("Initializing mypy server with {} workers...".format(num_workers))
     sys.stdout.flush()
 
     try:
@@ -60,7 +60,7 @@ def run_server(compact):
     file_cache = MypyFileCache()
 
     queueing_handler = MypyQueueingHandler(src_dirs)
-    mypy_handler = MypyEventHandler(g, queueing_handler, file_cache, compact)
+    mypy_handler = MypyEventHandler(g, queueing_handler, file_cache, compact, num_workers)
     queueing_handler.event_handler = mypy_handler
     mypy_handler.start()
 

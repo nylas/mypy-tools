@@ -8,6 +8,7 @@ import hashlib
 import os
 import shlex
 import tempfile
+import traceback
 from collections import defaultdict
 
 from subprocess import Popen, PIPE
@@ -40,10 +41,11 @@ def which(program):
 
 
 class MypyTask(object):
-    def __init__(self, filename):
+    def __init__(self, filename, include_error_context=True):
         # type: (str) -> None
         self.filename = filename
         self._proc = None   # type: Optional[Popen]
+        self.include_error_context = include_error_context
 
     def _should_use_strict_optional(self, path):
         # type: (str) -> bool
@@ -84,10 +86,12 @@ class MypyTask(object):
             if exit_code == 0:
                 return '', '', before_file_hash
 
-            context = self._find_context(out)
+            context = ''
+            if self.include_error_context:
+                context = self._find_context(out)
             return out, context, before_file_hash
-        except Exception as e:
-            print(e)
+        except Exception:
+            traceback.print_exc()
             return '', '', ''
         finally:
             self._proc = None
@@ -114,22 +118,46 @@ class MypyTask(object):
         template = """
   \033[91m\033[1mError\033[0m: {}
     \033[93m\033[1m{}\033[0m
-
-        {}
         {}
   >>>   {}
         {}
-        {}
 """
+        target_context_lines_before = 2
+        target_context_lines_after = 2
+        # We seed the context lines with an empty string to get the
+        # proper final padding before and after.
+        context_lines_before = ['']
+        context_lines_after = ['']
+
         with open(path, 'r') as f:
             lines = f.readlines()
+            # Insert a blank line so that 1-indexed line numbers from errors match.
             lines.insert(0, '')
+
             for line, message in parsed_errors:
-                begin_line = max(0, line - 2)
-                end_line = min(len(lines), line + 3)
-                error_lines = ['{} {}'.format(begin_line + num, l.rstrip('\n')) for num, l in enumerate(lines[begin_line:end_line])]
+                begin_line = max(0, line - target_context_lines_before)
+                end_line = min(len(lines), line + target_context_lines_after + 1)
+
+                for num, l in enumerate(lines[begin_line:line]):
+                    context_lines_before.append('{} {}'.format(begin_line + num, l.rstrip('\n')))
+
+                context_line = '{} {}'.format(line, lines[line].rstrip('\n'))
+
+                for num, l in enumerate(lines[line + 1:end_line]):
+                    context_lines_after.append('{} {}'.format(line + num + 1, l.rstrip('\n')))
+
+                error_lines = [
+                    '\n'.join(context_lines_before),
+                    context_line,
+                    '\n'.join(context_lines_after),
+                ]
+
+                # Insert the location.
                 error_lines.insert(0, '{}:{}'.format(path, line))
+
+                # Insert the error message.
                 error_lines.insert(1, message)
+
                 result.append(template.format(*error_lines))
         return result
 

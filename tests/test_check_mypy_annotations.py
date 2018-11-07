@@ -111,6 +111,66 @@ def sync(process_num,  # type: int
     assert len(error_lines) == 0
 
 
+def test_multiline_decorator_with_comment():
+    # type: () -> None
+    source = """
+@foo([
+    # random's range is [0.0, 1.0),
+])
+def test(foo, bar, expected):
+    # type: (float, int, bool) -> None
+    pass
+
+"""
+    error_lines = get_error_lines(source, {7})
+    assert len(error_lines) == 0
+
+
+def test_multiline_decorator_with_comment2():
+    # type: () -> None
+    source = """
+@foo([
+    # Comment [0.0, 1.0),
+])
+def test(foo, bar, expected):
+    # type: (float, int, bool) -> None
+    pass
+
+"""
+    error_lines = get_error_lines(source, {7})
+    assert len(error_lines) == 0
+
+
+def test_multiline_decorator_with_comment3():
+    # type: () -> None
+    source = """
+@foo([
+    'foo#',
+])
+def test(foo, bar, expected):
+    # type: (float, int, bool) -> None
+    pass
+
+"""
+    error_lines = get_error_lines(source, {7})
+    assert len(error_lines) == 0
+
+
+def test_multiline_decorator_with_comment4():
+    # type: () -> None
+    source = """
+@foo([
+    'foo',  # )
+])
+def test(foo, bar, expected):
+    # type: (float, int, bool) -> None
+    pass
+
+"""
+    error_lines = get_error_lines(source, {7})
+    assert len(error_lines) == 0
+
+
 def test_correct_offset():
     # type: () -> None
     source = """

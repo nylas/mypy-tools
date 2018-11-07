@@ -13,6 +13,13 @@ TYPE_PATTERN = re.compile(r'^\s+#\s+type:\s+')
 
 def find_final_line_including_parens(lines, line_num):
     # type: (List[str], int) -> int
+    # It's very challenging to find the *end* of a decorator.
+    # The python ast gives us the start line, but a decorator
+    # is essentially a function call that can span multiple lines,
+    # contain any literal arguments (e.g. strings), etc.
+    # This function attempts to account for all of those cases,
+    # but using a real lexer would probably be better.
+
     # Check if the statement spans multiple lines using parens.
     line = lines[line_num]
     lparen_loc = line.find('(')
@@ -24,16 +31,52 @@ def find_final_line_including_parens(lines, line_num):
     # There's an lparen so find the matching rparen.
     loc = lparen_loc + 1
     lparen_depth = 1
+    escape_char = False
+    inside_string = False
     while lparen_depth > 0:
         if loc >= len(line):
             line_num += 1
             line = lines[line_num]
             loc = 0
             continue
+
+        # This is either the start of an escaped character
+        # (e.g. "\"") or it could be the second character in
+        # an escaped sequence ("\\"). In either case, we want
+        # to flip the value of escape_char and go to the next
+        # character.
+        if line[loc] == '\\':
+            escape_char = not escape_char
+            loc += 1
+            continue
+
+        # This is the second part of an escaped character sequence
+        # so clear escape_char and keep going.
+        if escape_char:
+            escape_char = False
+            loc += 1
+            continue
+
+        # This the beginning of a string, so set the flag.
+        if line[loc] in '\'"':
+            if inside_string:
+                inside_string = False
+            else:
+                inside_string = True
+
+        # While inside a string skip the contents.
+        if inside_string:
+            loc += 1
+            continue
+
+        # We're not a string and we're not an escaped character,
+        # so check for parens.
         if line[loc] == '(':
             lparen_depth += 1
+
         elif line[loc] == ')':
             lparen_depth -= 1
+
         loc += 1
     return line_num
 

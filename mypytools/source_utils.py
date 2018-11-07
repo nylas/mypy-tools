@@ -66,6 +66,11 @@ def find_final_line_including_parens(lines, line_num):
         if line[loc] in '\'"':
             string_char = line[loc]
 
+        # Check for the beginning of a comment, advance to end of line.
+        elif line[loc] == '#':
+            loc = len(line)
+            continue
+
         # We're not a string and we're not an escaped character,
         # so check for parens.
         elif line[loc] == '(':

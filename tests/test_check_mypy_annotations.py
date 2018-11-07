@@ -93,6 +93,24 @@ def test_foo(nspid, mspid):
     assert len(error_lines) == 0
 
 
+def test_multiline_decorator3():
+    # type: () -> None
+    source = """
+@click.option(
+    '--process_num',
+    default=0,
+    help="This process's number in the process group: a unique "
+    "number satisfying 0 <= process_num < total_processes.")
+def sync(process_num,  # type: int
+        ):
+    # type: (...) -> None
+    pass
+
+"""
+    error_lines = get_error_lines(source, {10})
+    assert len(error_lines) == 0
+
+
 def test_correct_offset():
     # type: () -> None
     source = """
@@ -105,7 +123,6 @@ def create():
     """
     error_lines = get_error_lines(source, {6})
     assert error_lines == [4]
-
 
 
 def test_short_form_close_parenthesis_line():

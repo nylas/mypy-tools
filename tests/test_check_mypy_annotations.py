@@ -77,6 +77,22 @@ def test_normal_offset():
     assert len(error_lines) == 0
 
 
+def test_multiline_decorator2():
+    # type: () -> None
+    source = """
+@pytest.mark.parametrize('nspid, mspid', [
+    ('][][][][][][', '\\\\\\'(*&^sdfsaf^%')
+])
+def test_foo(nspid, mspid):
+    # type: (str, str) -> None
+    with pytest.raises(InputError):
+        foo_bar_baz(nspid, mspid)
+
+"""
+    error_lines = get_error_lines(source, {7})
+    assert len(error_lines) == 0
+
+
 def test_correct_offset():
     # type: () -> None
     source = """

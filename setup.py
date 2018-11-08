@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='mypytools',
-      version='0.1.12',
+      version='0.1.13',
       description='A bundle of tools to make using mypy easier',
       url='https://github.com/nylas/mypy-tools',
       license='MIT',

@@ -25,8 +25,8 @@ def foo():
     """, 'a.py')]
     output_lines = process_files(files)
     assert output_lines == [
-        'root: 0/1 (0.00%%)',
-        '    a.py: 0/1 (0.00%%)',
+        'root: 0/1 (0.00%)',
+        '    a.py: 0/1 (0.00%)',
     ]
 
 def test_double_file():
@@ -44,8 +44,8 @@ def bar():
     ]
     output_lines = process_files(files)
     assert output_lines == [
-        'root: 1/2 (50.00%%)',
-        '    a: 1/2 (50.00%%)',
-        '        b.py: 1/1 (100.00%%)',
-        '        a.py: 0/1 (0.00%%)'
+        'root: 1/2 (50.00%)',
+        '    a: 1/2 (50.00%)',
+        '        b.py: 1/1 (100.00%)',
+        '        a.py: 0/1 (0.00%)'
     ]

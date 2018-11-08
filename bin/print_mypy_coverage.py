@@ -53,7 +53,7 @@ class SourceObj(object):
             return
         spaces = ' ' * (indent * 4)
         percent = 100.0 * self.coverage()
-        output_lines.append("{spaces}{0}: {1}/{2} ({3:.2f}%%)".format(
+        output_lines.append("{spaces}{0}: {1}/{2} ({3:.2f}%)".format(
             self.name,
             self.num_annotated_funcs,
             self.num_scanned_funcs,

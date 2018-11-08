@@ -60,7 +60,7 @@ class MypyTask(object):
             return hashlib.md5(f.read()).hexdigest()
 
     def execute(self):
-        # type: () -> Tuple[int, str, str, str]
+        # type: () -> Tuple[int, str, str, str, str]
         mypy_path = os.pathsep.join(os.path.join(config['root_dir'], path) for path in config.get('mypy_path', []))
         flags = ' '.join(config.get('global_flags', []))
         strict_optional = '--strict-optional' if self._should_use_strict_optional(self.filename) else ''
@@ -70,10 +70,13 @@ class MypyTask(object):
             raise RuntimeError('Mypy executable missing.')
 
         cmd = shlex.split("{} {} {} {}".format(mypy_exec, flags, strict_optional, self.filename))
+        out = ''
+        err = ''
+        context = ''
         try:
             before_file_hash = self._get_file_hash()
             after_file_hash = ''
-            out = ''
+
             exit_code = 0
             while before_file_hash != after_file_hash:
                 before_file_hash = after_file_hash
@@ -84,16 +87,15 @@ class MypyTask(object):
                 after_file_hash = self._get_file_hash()
 
             if exit_code == 0:
-                return 0, '', '', before_file_hash
+                return 0, out, err, context, before_file_hash
 
-            context = ''
             if self.include_error_context:
                 context = self._find_context(out)
 
-            return exit_code, out, context, before_file_hash
+            return exit_code, out, err, context, before_file_hash
         except Exception:
             traceback.print_exc()
-            return -1, '', '', ''
+            return -1, out, err, context, ''
         finally:
             self._proc = None
 

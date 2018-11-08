@@ -55,7 +55,8 @@ def find_final_line_including_parens(lines, line_num):
                 escape_char = False
 
             # This isn't an escaped character so check for the end of the string.
-            elif line[loc] == string_char:
+            # The substring-ing part of this check is to handle the end of block strings.
+            elif line[loc:loc + len(string_char)] == string_char:
                 string_char = None
 
             # While inside a string skip the contents.
@@ -64,7 +65,11 @@ def find_final_line_including_parens(lines, line_num):
 
         # Check for the beginning of a string.
         if line[loc] in '\'"':
-            string_char = line[loc]
+            # Handle block strings.
+            if line[loc:loc + 3] == line[loc] * 3:
+                string_char = line[loc] * 3
+            else:
+                string_char = line[loc]
 
         # Check for the beginning of a comment, advance to end of line.
         elif line[loc] == '#':

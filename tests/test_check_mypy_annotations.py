@@ -171,6 +171,23 @@ def test(foo, bar, expected):
     assert len(error_lines) == 0
 
 
+def test_multiline_decorator_with_blockstring():
+    # type: () -> None
+    source = """
+@foo([
+    \"\"\"
+    foo bar baz ")
+    \"\"\"
+])
+def test(foo, bar, expected):
+    # type: (float, int, bool) -> None
+    pass
+
+"""
+    error_lines = get_error_lines(source, {9})
+    assert len(error_lines) == 0
+
+
 def test_correct_offset():
     # type: () -> None
     source = """

@@ -36,7 +36,7 @@ class MypyWorker(BaseThread):
         self.current_task = self._task_pool.pop(0)
         self._task_cond.release()
 
-        exit_code, output, full_context, file_hash = self.current_task.execute()
+        exit_code, output, error, full_context, file_hash = self.current_task.execute()
 
         self._task_cond.acquire()
         self.file_cache.store(self.current_task.filename, file_hash, output)

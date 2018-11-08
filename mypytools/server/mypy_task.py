@@ -62,14 +62,24 @@ class MypyTask(object):
     def execute(self):
         # type: () -> Tuple[int, str, str, str, str]
         mypy_path = os.pathsep.join(os.path.join(config['root_dir'], path) for path in config.get('mypy_path', []))
-        flags = ' '.join(config.get('global_flags', []))
-        strict_optional = '--strict-optional' if self._should_use_strict_optional(self.filename) else ''
+
         mypy_exec = which('mypy')
+        python_exec = which('python')
         if mypy_exec is None:
             print("Couldn't find mypy executable. Is it installed and in your PATH?")
             raise RuntimeError('Mypy executable missing.')
 
-        cmd = shlex.split("{} {} {} {}".format(mypy_exec, flags, strict_optional, self.filename))
+        if python_exec is None:
+            print("Couldn't find python executable. Is it in your PATH?")
+            raise RuntimeError('Python executable missing.')
+
+        flags = config.get('global_flags', [])
+        flags.append('--python-executable={}'.format(python_exec))
+
+        if self._should_use_strict_optional(self.filename):
+            flags.append('--strict-optional')
+
+        cmd = shlex.split("{} {} {}".format(mypy_exec, ' '.join(flags), self.filename))
         out = ''
         err = ''
         context = ''

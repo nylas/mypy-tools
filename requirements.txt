@@ -2,7 +2,7 @@ argh==0.26.2
 click==6.7
 findimports==1.4.1
 pathtools==0.1.2
-py==1.4.34
+py==1.10.0
 pytest==3.2.3
 PyYAML==3.12
 typing==3.6.2
